@@ -34,15 +34,14 @@ def count_diag_dl(wordsearch, word)
   count
 end
 
-wordsearch = $stdin.each_line.map(&:chomp).map(&:chars)
+def count_matches(wordsearch, needle)
+  count_horiz(wordsearch, needle) + count_horiz(wordsearch, needle.reverse) +
+    count_vert(wordsearch, needle) + count_vert(wordsearch, needle.reverse) +
+    count_diag_dr(wordsearch, needle) + count_diag_dr(wordsearch, needle.reverse) +
+    count_diag_dl(wordsearch, needle) + count_diag_dl(wordsearch, needle.reverse)
+end
 
-total = count_horiz(wordsearch, 'XMAS') +
-  count_horiz(wordsearch, 'SAMX') +
-  count_vert(wordsearch, 'XMAS') +
-  count_vert(wordsearch, 'SAMX') +
-  count_diag_dr(wordsearch, 'XMAS') +
-  count_diag_dr(wordsearch, 'SAMX') +
-  count_diag_dl(wordsearch, 'XMAS') +
-  count_diag_dl(wordsearch, 'SAMX')
+wordsearch = $stdin.each_line.map(&:chomp).map(&:chars)
+total = count_matches(wordsearch, 'XMAS')
 
 puts total
