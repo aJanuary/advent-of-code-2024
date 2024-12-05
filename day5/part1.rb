@@ -7,13 +7,9 @@ ordering_rules = ordering_str
   .transform_values {|v| v.map(&:last).flatten}
 updates = update_str.split("\n").map {|line| line.split(",").map(&:to_i)}
 
-in_correct_order = updates.filter do |update|
-  (0...update.size).all? do |i|
-    i.downto(0) do |j|
-      break false if (ordering_rules[update[i]] || []).include?(update[j])
-    end
-  end
-end
-
-answer = in_correct_order.map {|u| u[u.size / 2]}.sum
+answer = updates.filter_map do |update|
+  sorted = update.sort {|a, b| (ordering_rules[a] || []).include?(b) ? -1 : 1}
+  next if sorted != update
+  sorted[sorted.size / 2]
+end.sum
 puts answer
