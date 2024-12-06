@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'set'
+require 'parallel'
 
 Coord = Struct.new(:x, :y) do
   def +(other)
@@ -66,12 +67,13 @@ lines.each_with_index do |line, y|
 end
 
 visited = get_visited_positions(width, height, obstacles, guard).uniq(&:pos)
-obstacle_positions = visited.filter do |visited_pos|
+obstacle_positions = Parallel.map(visited) do |visited_pos|
   next if visited_pos.pos.x == guard.pos.x && visited_pos.pos.y == guard.pos.y
   # Start from just before the obstacle, and see if that creates a loop
   guard_pos = visited_pos.pos - visited_pos.dir
   new_obstacles = obstacles + [visited_pos.pos]
-  guard_loops?(width, height, new_obstacles, Guard.new(guard_pos, visited_pos.dir))
-end
+  loops = guard_loops?(width, height, new_obstacles, Guard.new(guard_pos, visited_pos.dir))
+  { loops: loops, pos: visited_pos }
+end.filter {|x| x[:loops]}.map {|x| x[:pos]}
 
 puts obstacle_positions.size
