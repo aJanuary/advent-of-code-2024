@@ -6,19 +6,23 @@ Coord = Struct.new(:x, :y) do
   def +(other)
     Coord.new(x + other.x, y + other.y)
   end
+
+  def -(other)
+    Coord.new(x - other.x, y - other.y)
+  end
 end
 
 Guard = Struct.new(:pos, :dir)
 
-def adding_obstacle_causes_loop?(obstacle_pos, width, height, obstacles, guard)
+def guard_loops?(width, height, obstacles, guard)
   visited = Set.new
-  guard_pos = Coord.new(guard.pos.x, guard.pos.y)
-  guard_dir = Coord.new(guard.dir.x, guard.dir.y)
+  guard_pos = guard.pos
+  guard_dir = guard.dir
 
   while guard_pos.x >= 0 && guard_pos.x < width && guard_pos.y >= 0 && guard_pos.y < height
     new_pos = guard_pos + guard_dir
-    
-    if new_pos == obstacle_pos || obstacles.include?(new_pos)
+
+    if obstacles.include?(new_pos)
       guard_dir = Coord.new(-guard_dir.y, guard_dir.x)
       return true unless visited.add?(Guard.new(guard_pos, guard_dir))
     else
@@ -41,7 +45,7 @@ def get_visited_positions(width, height, obstacles, guard)
       guard_pos = new_pos
     end
 
-    visited << guard_pos
+    visited << Guard.new(guard_pos, guard_dir)
   end
   visited
 end
@@ -61,10 +65,13 @@ lines.each_with_index do |line, y|
   end
 end
 
-visited = get_visited_positions(width, height, obstacles, guard)
-num_successes = visited.count do |obstacle_pos|
-  next if obstacle_pos.x == guard.pos.x && obstacle_pos.y == guard.pos.y
-  adding_obstacle_causes_loop?(obstacle_pos, width, height, obstacles, guard)
+visited = get_visited_positions(width, height, obstacles, guard).uniq(&:pos)
+obstacle_positions = visited.filter do |visited_pos|
+  next if visited_pos.pos.x == guard.pos.x && visited_pos.pos.y == guard.pos.y
+  # Start from just before the obstacle, and see if that creates a loop
+  guard_pos = visited_pos.pos - visited_pos.dir
+  new_obstacles = obstacles + [visited_pos.pos]
+  guard_loops?(width, height, new_obstacles, Guard.new(guard_pos, visited_pos.dir))
 end
 
-puts num_successes
+puts obstacle_positions.size
