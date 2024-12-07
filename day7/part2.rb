@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'parallel'
+
 def is_valid(calibration)
   def _is_valid(answer, nums, total)
     return answer == total if nums.empty?
@@ -26,8 +28,8 @@ calibrations = $stdin.each_line.map do |line|
   { answer: answer, nums: nums }
 end
 
-valid_calibrations = calibrations.filter do |calibration|
-  is_valid(calibration)
+valid_calibrations = Parallel.filter_map(calibrations) do |calibration|
+  is_valid(calibration) ? calibration : nil
 end
 
 puts valid_calibrations.map {|c| c[:answer]}.sum
