@@ -1,15 +1,17 @@
 #!/usr/bin/env ruby
 
 def compact(disc)
-  (0...disc.size).each do |index|
-    if disc[index] == :empty
-      (disc.size - 1).downto(0).each do |index2|
-        if disc[index2] != :empty
-          disc[index], disc[index2] = disc[index2], disc[index]
-          break
-        end
+  free_index = 0
+  file_index = disc.size - 1
+  while free_index <= file_index
+    if disc[free_index] == :empty
+      while disc[file_index] == :empty
+        file_index -= 1
       end
+      disc[free_index] = disc[file_index]
+      disc[file_index] = :empty
     end
+    free_index += 1
   end
 end
 
