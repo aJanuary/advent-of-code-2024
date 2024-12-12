@@ -66,68 +66,29 @@ def find_coords_in_field(map, c)
     idx += 1
   end
 
-  field
+  Set.new(field)
 end
 
 def calc_fence_price(map, region)
-  crop = map[region[0]]
+  crop = map[region.first]
 
-  xs = region.map(&:x)
-  ys = region.map(&:y)
-  x_range = xs.min..xs.max
-  y_range = ys.min..ys.max
-
-  num_edges = 0
-
-  y_range.each do |y|
-    walking_north_edge = false
-    walking_south_edge = false
-  
-    x_range.each do |x|
-      c = Coord.new(x, y)
-      if region.include?(c)
-        up_c = c + Coord.new(0, -1)
-        down_c = c + Coord.new(0, 1)
-
-        has_north_edge = !map.in_bounds?(up_c) || map[up_c] != crop
-        has_south_edge = !map.in_bounds?(down_c) || map[down_c] != crop
-
-        num_edges += 1 if has_north_edge && !walking_north_edge
-        num_edges += 1 if has_south_edge && !walking_south_edge
-
-        walking_north_edge = has_north_edge
-        walking_south_edge = has_south_edge
+  # Count all the times we move from an edge to a non-edge in each direction
+  # By looking only at transitions, adjactent edges effectively get merged
+  # together.
+  num_edges = region.map do |c|
+    CARDINAL_DIRS.count do |delta|
+      o = c + delta
+      # Test if c has an edge in the direction of delta
+      if !map.in_bounds?(o) || map[o] != crop
+        # Only count this edge if the previous cell along this line wasn't an edge
+        prev_c = c + Coord.new(delta.y, -delta.x)
+        prev_o = prev_c + delta
+        !region.include?(prev_c) || (map.in_bounds?(prev_o) && map[prev_o] == crop)
       else
-        walking_north_edge = false
-        walking_south_edge = false
+        false
       end
     end
-  end
-
-  x_range.each do |x|
-    walking_west_edge = false
-    walking_east_edge = false
-  
-    y_range.each do |y|
-      c = Coord.new(x, y)
-      if region.include?(c)
-        left_c = c + Coord.new(-1, 0)
-        right_c = c + Coord.new(1, 0)
-
-        has_west_edge = !map.in_bounds?(left_c) || map[left_c] != crop
-        has_east_edge = !map.in_bounds?(right_c) || map[right_c] != crop
-
-        num_edges += 1 if has_west_edge && !walking_west_edge
-        num_edges += 1 if has_east_edge && !walking_east_edge
-
-        walking_west_edge = has_west_edge
-        walking_east_edge = has_east_edge
-      else
-        walking_west_edge = false
-        walking_east_edge = false
-      end
-    end
-  end
+  end.sum
 
   num_edges * region.size
 end
