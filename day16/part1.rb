@@ -5,22 +5,38 @@ require '../lib/2d'
 
 PosAndDir = Struct.new(:coord, :dir)
 
+class PriorityQueue
+  def initialize
+    @queue = []
+  end
+
+  def push(item, priority)
+    @queue << [item, priority]
+    @queue.sort_by! {|_, p| p}
+  end
+
+  def pop
+    @queue.shift
+  end
+end
+
 def find_fastest_path(graph, start_node, end_node)
   distances = graph.keys.map do |node|
     [node, Float::INFINITY]
   end.to_h
   distances[start_node] = 0
 
-  unvisited = Set.new(distances.keys)
+  queue = PriorityQueue.new
+  queue.push(start_node, 0)
 
   loop do
-    c = unvisited.min_by {|node| distances[node]}
+    c, cur_dist = queue.pop
     return distances[end_node] if c == end_node
-    unvisited.delete(c) unless c.nil?
 
     graph[c].each do |neighbor, step_cost|
-      if unvisited.include?(neighbor)
-        distances[neighbor] = [distances[neighbor], distances[c] + step_cost].min
+      if distances[neighbor] > distances[c] + step_cost
+        distances[neighbor] = distances[c] + step_cost
+        queue.push(neighbor, distances[neighbor])
       end
     end
   end
